@@ -87,19 +87,19 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ### SMS & Messaging Simulation
 - [x] **Inject incoming SMS:** Simulate received SMS with custom sender numbers, body text, and timestamps (`adb shell am broadcast -a android.provider.Telephony.SMS_RECEIVED`).
-- [ ] **Simulate MMS receipt:** Inject mock multimedia messages.
-- [ ] **Simulate SMS delivery reports:** Trigger mock delivery confirmation events.
+- [x] **Simulate MMS receipt:** Inject mock multimedia messages.
+- [x] **Simulate SMS delivery reports:** Trigger mock delivery confirmation events.
 
 ### Telephony & Call Simulation
 - [x] **Simulate incoming call:** Trigger incoming call state with arbitrary caller IDs.
-- [ ] **Simulate call state transitions:** Transition telephony state across `IDLE`, `RINGING`, and `OFFHOOK`.
-- [ ] **Simulate USSD responses:** Trigger mock carrier messages and USSD alert popups.
+- [x] **Simulate call state transitions:** Transition telephony state across `IDLE`, `RINGING`, and `OFFHOOK`.
+- [x] **Simulate USSD responses:** Trigger mock carrier messages and USSD alert popups.
 
 ### Push Notifications & Broadcasts
-- [ ] **Inject custom system broadcasts:** Fire arbitrary explicit and implicit intent broadcasts with custom extras (`adb shell am broadcast`).
-- [ ] **Start background service directly:** Force start specific component services (`adb shell am start-service`).
-- [ ] **Trigger scheduled job execution:** Force execute pending JobScheduler jobs (`adb shell cmd jobscheduler run`).
-- [ ] **Trigger pending alarms:** Instantly fire pending AlarmManager triggers (`adb shell dumpsys alarm`).
+- [x] **Inject custom system broadcasts:** Fire arbitrary explicit and implicit intent broadcasts with custom extras (`adb shell am broadcast`).
+- [x] **Start background service directly:** Force start specific component services (`adb shell am start-service`).
+- [x] **Trigger scheduled job execution:** Force execute pending JobScheduler jobs (`adb shell cmd jobscheduler run`).
+- [x] **Trigger pending alarms:** Instantly fire pending AlarmManager triggers (`adb shell dumpsys alarm`).
 
 ---
 
