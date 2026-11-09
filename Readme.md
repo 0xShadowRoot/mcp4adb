@@ -17,6 +17,7 @@ MCP4ADB/
     ├── mcp.rs          # JSON-RPC request router, parsing, and tool schemas
     ├── adb_service.rs  # Core business logic interfacing with the `radb` crate
     └── logger.rs       # Centralized stderr logging pipeline (prevents stdout corruption)
+```
 ---
 
 ##  Key Features & Tools
