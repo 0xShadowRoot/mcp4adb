@@ -31,27 +31,27 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ### Installation & Updates
 - [x] **Install standard APKs:** Support single APK installation (`adb install`).
-- [ ] **Install split APKs:** Support multi-APK/bundle installation (`adb install-multiple`).
+- [x] **Install split APKs:** Support multi-APK/bundle installation (`adb install-multiple`).
 - [x] **Grant runtime permissions automatically:** Auto-grant permissions during installation (`-g` flag).
 - [x] **Allow version downgrade:** Force install over newer version (`-d` flag).
-- [ ] **Install test-only packages:** Support packages signed with test keys (`-t` flag).
+- [x] **Install test-only packages:** Support packages signed with test keys (`-t` flag).
 
 ### Removal & Cleanup
-- [ ] **Uninstall packages:** Remove target application (`adb uninstall`).
-- [ ] **Keep data on uninstall:** Remove APK while preserving data (`-k` flag).
+- [x] **Uninstall packages:** Remove target application (`adb uninstall`).
+- [x] **Keep data on uninstall:** Remove APK while preserving data (`-k` flag).
 - [x] **Clear application data:** Reset app storage and cache without full uninstall (`adb shell pm clear <pkg>`).
 
 ### Package Inspection & Enumeration
-- [ ] **List installed packages:** Filter by system, 3rd-party, enabled, or disabled (`adb shell pm list packages [-3|-s|-e|-d]`).
-- [ ] **Dump package details:** Fetch manifest data, permissions, exported components, and intent filters (`adb shell dumpsys package <pkg>`).
-- [ ] **Retrieve APK file paths:** Find absolute system paths of target APKs for pulling (`adb shell pm path <pkg>`).
+- [x] **List installed packages:** Filter by system, 3rd-party, enabled, or disabled (`adb shell pm list packages [-3|-s|-e|-d]`).
+- [x] **Dump package details:** Fetch manifest data, permissions, exported components, and intent filters (`adb shell dumpsys package <pkg>`).
+- [x] **Retrieve APK file paths:** Find absolute system paths of target APKs for pulling (`adb shell pm path <pkg>`).
 - [ ] **Query default handlers:** List default applications handling specific intents or MIME types.
 
 ### Process & Component Control
 - [x] **Force-stop application:** Terminate app processes cleanly (`adb shell am force-stop <pkg>`).
-- [ ] **Enable/Disable components:** Selectively disable/enable specific activities, receivers, services, or providers (`adb shell pm disable/enable <component>`).
-- [ ] **Set app standby bucket:** Force application into specific power usage buckets (`active`, `working_set`, `frequent`, `rare`).
-- [ ] **Set background restrictions:** Enable/disable background execution limits for the target package.
+- [x] **Enable/Disable components:** Selectively disable/enable specific activities, receivers, services, or providers (`adb shell pm disable/enable <component>`).
+- [x] **Set app standby bucket:** Force application into specific power usage buckets (`active`, `working_set`, `frequent`, `rare`).
+- [x] **Set background restrictions:** Enable/disable background execution limits for the target package.
 
 ---
 
@@ -60,25 +60,25 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ### Locale, Time & Localization
 - [x] **Set system locale:** Change language and region to test geo-targeted malware triggers (`adb shell settings put global system_locales <locale>`).
-- [ ] **Manipulate system clock/timezone:** Change system date/time to bypass time-bomb delays or expiration checks (`adb shell date ...`).
-- [ ] **Toggle auto-time sync:** Disable network time synchronization to hold static system timestamps.
+- [x] **Manipulate system clock/timezone:** Change system date/time to bypass time-bomb delays or expiration checks (`adb shell date ...`).
+- [x] **Toggle auto-time sync:** Disable network time synchronization to hold static system timestamps.
 
 ### Location & Sensor Spoofing
 - [x] **Inject GPS coordinates:** Mock current latitude, longitude, and altitude values via location service or intents.
-- [ ] **Simulate accelerometer/gyroscope:** Inject motion sensor events (rotation, tilt, shaking).
-- [ ] **Mock light & proximity sensors:** Inject ambient light levels and proximity trigger states.
-- [ ] **Mock biometric authentication:** Inject success/failure callbacks for fingerprint/face identification triggers.
+- [x] **Simulate accelerometer/gyroscope:** Inject motion sensor events (rotation, tilt, shaking).
+- [x] **Mock light & proximity sensors:** Inject ambient light levels and proximity trigger states.
+- [x] **Mock biometric authentication:** Inject success/failure callbacks for fingerprint/face identification triggers.
 
 ### Display & UI Configuration
-- [ ] **Change display resolution:** Scale screen dimensions for UI edge cases or dynamic layout testing (`adb shell wm size <WxH>`).
-- [ ] **Change display density:** Alter display DPI density (`adb shell wm density <dpi>`).
-- [ ] **Toggle dark/light mode:** Switch system UI theme state.
-- [ ] **Toggle layout bounds:** Enable visual layout bounds to assist vision-based AI agents (`adb shell setprop debug.layout true`).
+- [x] **Change display resolution:** Scale screen dimensions for UI edge cases or dynamic layout testing (`adb shell wm size <WxH>`).
+- [x] **Change display density:** Alter display DPI density (`adb shell wm density <dpi>`).
+- [x] **Toggle dark/light mode:** Switch system UI theme state.
+- [x] **Toggle layout bounds:** Enable visual layout bounds to assist vision-based AI agents (`adb shell setprop debug.layout true`).
 
 ### Hardware & Peripheral States
 - [x] **Simulate battery level & status:** Spoof percentage, plugged status (AC, USB, Wireless), and temperature (`adb shell dumpsys battery set level/status/unplug`).
-- [ ] **Toggle network connectivity states:** Toggle Wi-Fi, Mobile Data, and Airplane Mode status on demand.
-- [ ] **Simulate physical button input:** Trigger keycodes for Power, Volume UP/DOWN, Home, Back, and Recent Apps (`adb shell input keyevent <code >`).
+- [x] **Toggle network connectivity states:** Toggle Wi-Fi, Mobile Data, and Airplane Mode status on demand.
+- [x] **Simulate physical button input:** Trigger keycodes for Power, Volume UP/DOWN, Home, Back, and Recent Apps (`adb shell input keyevent <code >`).
 
 ---
 
@@ -211,6 +211,6 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ---
 
-## 10. Core ADB Connection & Control
-- [x] **List devices and adb shell
+## 10. Core ADB Connection & Control 
+- [x] **List devices and adb shell**
 ---

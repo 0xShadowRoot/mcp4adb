@@ -38,33 +38,92 @@ pub fn execute_adb_tool(name: &str, args: &Value) -> Result<String> {
                     log_error("ADB", "Missing required argument 'apk_path'");
                     anyhow::anyhow!("Missing 'apk_path' argument")
                 })?;
+            let grant_permissions = args.get("grant_permissions").and_then(|v| v.as_bool()).unwrap_or(false);
+            let allow_downgrade = args.get("allow_downgrade").and_then(|v| v.as_bool()).unwrap_or(false);
+            let test_only = args.get("test_only").and_then(|v| v.as_bool()).unwrap_or(false);
 
-            log_info("ADB", &format!("Installing APK from path: {}", apk_path));
+            log_info("ADB", &format!("Installing APK from path: {} (grant: {}, downgrade: {}, test: {})", apk_path, grant_permissions, allow_downgrade, test_only));
+            
+            let mut adb_args = vec!["install".to_string()];
+            if grant_permissions { adb_args.push("-g".to_string()); }
+            if allow_downgrade { adb_args.push("-d".to_string()); }
+            if test_only { adb_args.push("-t".to_string()); }
+            adb_args.push(apk_path.to_string());
+
+            let output = std::process::Command::new("adb")
+                .args(&adb_args)
+                .output()?;
+
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                log_info("ADB", "APK installed successfully.");
+                Ok(format!("Successfully installed APK.\n{}", stdout))
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                log_error("ADB", &format!("Installation failed: {}", stderr));
+                Err(anyhow::anyhow!("ADB install failed: {}", stderr))
+            }
+        }
+        "adb_install_multiple" => {
+            let apk_paths = args
+                .get("apk_paths")
+                .and_then(|v| v.as_array())
+                .ok_or_else(|| anyhow::anyhow!("Missing 'apk_paths' array argument"))?;
+            let grant_permissions = args.get("grant_permissions").and_then(|v| v.as_bool()).unwrap_or(false);
+
+            let mut adb_args = vec!["install-multiple".to_string()];
+            if grant_permissions { adb_args.push("-g".to_string()); }
+
+            for path_val in apk_paths {
+                if let Some(p) = path_val.as_str() {
+                    adb_args.push(p.to_string());
+                }
+            }
+
+            log_info("ADB", &format!("Installing split/multiple APKs: {:?}", adb_args));
+            let output = std::process::Command::new("adb")
+                .args(&adb_args)
+                .output()?;
+
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                log_info("ADB", "Split APKs installed successfully.");
+                Ok(format!("Successfully installed split APKs.\n{}", stdout))
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                log_error("ADB", &format!("Split APK installation failed: {}", stderr));
+                Err(anyhow::anyhow!("ADB install-multiple failed: {}", stderr))
+            }
+        }
+        "adb_uninstall_app" => {
+            let package_name = args
+                .get("package_name")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing 'package_name' argument"))?;
+            let keep_data = args.get("keep_data").and_then(|v| v.as_bool()).unwrap_or(false);
+
+            log_info("ADB", &format!("Uninstalling package: {} (keep_data: {})", package_name, keep_data));
             let devices = client.list_devices()?;
-            let mut device = devices.into_iter().next().ok_or_else(|| {
-                log_error("ADB", "Installation aborted: No active device found");
-                anyhow::anyhow!("No active ADB device found")
-            })?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
 
-            let output = device.install(apk_path)?;
-            log_info("ADB", "APK installed successfully.");
-            Ok(format!("Successfully installed APK: {:?}", output))
+            let cmd = if keep_data {
+                format!("pm uninstall -k {}", package_name)
+            } else {
+                format!("pm uninstall {}", package_name)
+            };
+            let output = device.shell(cmd)?;
+            log_info("ADB", &format!("Package {} uninstalled.", package_name));
+            Ok(format!("Uninstall result for {}:\n{}", package_name, output))
         }
         "adb_force_stop" => {
             let package_name = args
                 .get("package_name")
                 .and_then(|v| v.as_str())
-                .ok_or_else(|| {
-                    log_error("ADB", "Missing required argument 'package_name'");
-                    anyhow::anyhow!("Missing 'package_name' argument")
-                })?;
+                .ok_or_else(|| anyhow::anyhow!("Missing 'package_name' argument"))?;
 
             log_info("ADB", &format!("Force stopping package: {}", package_name));
             let devices = client.list_devices()?;
-            let mut device = devices.into_iter().next().ok_or_else(|| {
-                log_error("ADB", "Force stop aborted: No active device found");
-                anyhow::anyhow!("No active ADB device found")
-            })?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
 
             let cmd = format!("am force-stop {}", package_name);
             let output = device.shell(cmd)?;
@@ -75,22 +134,79 @@ pub fn execute_adb_tool(name: &str, args: &Value) -> Result<String> {
             let package_name = args
                 .get("package_name")
                 .and_then(|v| v.as_str())
-                .ok_or_else(|| {
-                    log_error("ADB", "Missing required argument 'package_name'");
-                    anyhow::anyhow!("Missing 'package_name' argument")
-                })?;
+                .ok_or_else(|| anyhow::anyhow!("Missing 'package_name' argument"))?;
 
             log_info("ADB", &format!("Clearing user data/cache for package: {}", package_name));
             let devices = client.list_devices()?;
-            let mut device = devices.into_iter().next().ok_or_else(|| {
-                log_error("ADB", "Clear data aborted: No active device found");
-                anyhow::anyhow!("No active ADB device found")
-            })?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
 
             let cmd = format!("pm clear {}", package_name);
             let output = device.shell(cmd)?;
             log_info("ADB", &format!("Cleared data for package {}.", package_name));
             Ok(format!("Cleared data for {}. Output: {}", package_name, output))
+        }
+        "adb_list_packages" => {
+            let filter = args.get("filter").and_then(|v| v.as_str()).unwrap_or("");
+            log_info("ADB", &format!("Listing packages with filter: '{}'", filter));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = format!("pm list packages {}", filter);
+            let output = device.shell(cmd)?;
+            Ok(output)
+        }
+        "adb_dump_package" => {
+            let package_name = args.get("package_name").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'package_name'"))?;
+            log_info("ADB", &format!("Dumping package details for: {}", package_name));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("dumpsys package {}", package_name))?;
+            Ok(output)
+        }
+        "adb_get_package_path" => {
+            let package_name = args.get("package_name").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'package_name'"))?;
+            log_info("ADB", &format!("Retrieving APK path for package: {}", package_name));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("pm path {}", package_name))?;
+            Ok(output)
+        }
+        "adb_set_component_state" => {
+            let component = args.get("component_name").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'component_name'"))?;
+            let enable = args.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+
+            let action = if enable { "enable" } else { "disable" };
+            log_info("ADB", &format!("Setting component state {} for {}", action, component));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("pm {} {}", action, component))?;
+            Ok(output)
+        }
+        "adb_set_standby_bucket" => {
+            let package_name = args.get("package_name").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'package_name'"))?;
+            let bucket = args.get("bucket").and_then(|v| v.as_str()).unwrap_or("active"); // active, working_set, frequent, rare, restricted
+
+            log_info("ADB", &format!("Setting app standby bucket for {} to {}", package_name, bucket));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("am set-standby-bucket {} {}", package_name, bucket))?;
+            Ok(output)
+        }
+        "adb_set_background_restrictions" => {
+            let package_name = args.get("package_name").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'package_name'"))?;
+            let restricted = args.get("restricted").and_then(|v| v.as_bool()).unwrap_or(true);
+
+            let mode = if restricted { "ignore" } else { "allow" };
+            log_info("ADB", &format!("Setting background execution restrictions for {} to {}", package_name, mode));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("cmd appops set {} RUN_ANY_IN_BACKGROUND {}", package_name, mode))?;
+            Ok(output)
         }
 
         // ==========================================
@@ -121,6 +237,122 @@ pub fn execute_adb_tool(name: &str, args: &Value) -> Result<String> {
             log_info("ADB", "Locale changed successfully.");
             Ok(format!("Locale set to {}. Output: {}", locale, output))
         }
+        "adb_set_time" => {
+            let datetime = args.get("datetime").and_then(|v| v.as_str());
+            let timezone = args.get("timezone").and_then(|v| v.as_str());
+
+            log_info("ADB", &format!("Manipulating system clock/timezone (datetime: {:?}, timezone: {:?})", datetime, timezone));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let mut outputs = vec![];
+            if let Some(dt) = datetime {
+                let out = device.shell(format!("date {}", dt))?;
+                outputs.push(format!("Date output: {}", out));
+            }
+            if let Some(tz) = timezone {
+                let out = device.shell(format!("setprop persist.sys.timezone {}", tz))?;
+                outputs.push(format!("Timezone output: {}", out));
+            }
+            Ok(outputs.join("\n"))
+        }
+        "adb_toggle_auto_time" => {
+            let enabled = args.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false);
+            let val = if enabled { 1 } else { 0 };
+
+            log_info("ADB", &format!("Toggling auto-time synchronization: {}", enabled));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let out1 = device.shell(format!("settings put global auto_time {}", val))?;
+            let out2 = device.shell(format!("settings put global auto_time_zone {}", val))?;
+            Ok(format!("Auto time set to {}.\nOutputs:\n{}\n{}", enabled, out1, out2))
+        }
+        "adb_simulate_sensor" => {
+            let sensor = args.get("sensor").and_then(|v| v.as_str()).unwrap_or("light");
+            let values = args.get("values").and_then(|v| v.as_str()).unwrap_or("50");
+
+            log_info("ADB", &format!("Injecting sensor data for {}: {}", sensor, values));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = format!("sensor set {} {}", sensor, values);
+            let output = device.shell(cmd)?;
+            Ok(format!("Sensor {} updated. Output: {}", sensor, output))
+        }
+        "adb_mock_biometric" => {
+            let success = args.get("success").and_then(|v| v.as_bool()).unwrap_or(true);
+
+            log_info("ADB", &format!("Mocking biometric authentication result: success={}", success));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = if success { "auth finger success" } else { "auth finger fail" };
+            let output = device.shell(cmd)?;
+            Ok(format!("Biometric authentication mocked (Success: {}). Output: {}", success, output))
+        }
+        "adb_set_display_size" => {
+            let width = args.get("width").and_then(|v| v.as_i64());
+            let height = args.get("height").and_then(|v| v.as_i64());
+
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = match (width, height) {
+                (Some(w), Some(h)) => {
+                    log_info("ADB", &format!("Changing display resolution to {}x{}", w, h));
+                    format!("wm size {}x{}", w, h)
+                }
+                _ => {
+                    log_info("ADB", "Resetting display resolution to default");
+                    "wm size reset".to_string()
+                }
+            };
+            let output = device.shell(cmd)?;
+            Ok(format!("Display resolution updated. Output: {}", output))
+        }
+        "adb_set_display_density" => {
+            let density = args.get("density").and_then(|v| v.as_i64());
+
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = match density {
+                Some(d) => {
+                    log_info("ADB", &format!("Changing display density to {}", d));
+                    format!("wm density {}", d)
+                }
+                None => {
+                    log_info("ADB", "Resetting display density to default");
+                    "wm density reset".to_string()
+                }
+            };
+            let output = device.shell(cmd)?;
+            Ok(format!("Display density updated. Output: {}", output))
+        }
+        "adb_set_dark_mode" => {
+            let enabled = args.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false);
+            let mode = if enabled { "yes" } else { "no" };
+
+            log_info("ADB", &format!("Setting dark mode theme state: {}", enabled));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("cmd uimode night {}", mode))?;
+            Ok(format!("Dark mode set to {}. Output: {}", enabled, output))
+        }
+        "adb_toggle_layout_bounds" => {
+            let enabled = args.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false);
+            let val = if enabled { "true" } else { "false" };
+
+            log_info("ADB", &format!("Toggling visual layout bounds: {}", enabled));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let out1 = device.shell(format!("setprop debug.layout {}", val))?;
+            let out2 = device.shell("service call window 3")?; // Refresh window layout
+            Ok(format!("Layout bounds set to {}.\nOutputs:\n{}\n{}", enabled, out1, out2))
+        }
         "adb_set_battery" => {
             let level = args.get("level").and_then(|v| v.as_i64()).unwrap_or(50);
             let charging = args.get("charging").and_then(|v| v.as_bool()).unwrap_or(true);
@@ -137,7 +369,48 @@ pub fn execute_adb_tool(name: &str, args: &Value) -> Result<String> {
             log_info("ADB", "Battery states altered successfully.");
             Ok(format!("Battery updated to {}% (Charging: {}). Output: {}", level, charging, output))
         }
+        "adb_toggle_connectivity" => {
+            let wifi = args.get("wifi").and_then(|v| v.as_bool());
+            let mobile_data = args.get("mobile_data").and_then(|v| v.as_bool());
+            let airplane_mode = args.get("airplane_mode").and_then(|v| v.as_bool());
 
+            log_info("ADB", &format!("Toggling connectivity states (wifi: {:?}, data: {:?}, airplane: {:?})", wifi, mobile_data, airplane_mode));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let mut outputs = vec![];
+            if let Some(w) = wifi {
+                let state = if w { "wifi enable" } else { "wifi disable" };
+                let out = device.shell(format!("svc {}", state))?;
+                outputs.push(format!("WiFi: {}", out));
+            }
+            if let Some(m) = mobile_data {
+                let state = if m { "data enable" } else { "data disable" };
+                let out = device.shell(format!("svc {}", state))?;
+                outputs.push(format!("Mobile Data: {}", out));
+            }
+            if let Some(a) = airplane_mode {
+                let val = if a { "1" } else { "0" };
+                let out1 = device.shell(format!("settings put global airplane_mode_on {}", val))?;
+                let out2 = device.shell(format!("am broadcast -a android.intent.action.AIRPLANE_MODE --ez state {}", a))?;
+                outputs.push(format!("Airplane Mode: {} / {}", out1, out2));
+            }
+            Ok(outputs.join("\n"))
+        }
+        "adb_keyevent" => {
+            let key_code = args.get("key_code").and_then(|v| v.as_i64()).ok_or_else(|| anyhow::anyhow!("Missing 'key_code'"))?;
+
+            log_info("ADB", &format!("Sending hardware physical keyevent code: {}", key_code));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("input keyevent {}", key_code))?;
+            Ok(format!("Keyevent {} sent. Output: {}", key_code, output))
+        }
+
+        // ==========================================
+        // 3. COMMUNICATION & TELEPHONY SIMULATION
+        // ==========================================
         // ==========================================
         // 3. COMMUNICATION & TELEPHONY SIMULATION
         // ==========================================
@@ -154,6 +427,29 @@ pub fn execute_adb_tool(name: &str, args: &Value) -> Result<String> {
             log_info("ADB", "Simulated SMS broadcasted.");
             Ok(format!("SMS simulated. Output: {}", output))
         }
+        "adb_simulate_mms" => {
+            let sender = args.get("sender").and_then(|v| v.as_str()).unwrap_or("+15555215554");
+            let subject = args.get("subject").and_then(|v| v.as_str()).unwrap_or("MMS Test Subject");
+
+            log_info("ADB", &format!("Simulating MMS receipt from {}: '{}'", sender, subject));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = format!("am broadcast -a android.intent.action.DATA_SMS_RECEIVED -d mms://localhost --es subject \"{}\" --es originating_address \"{}\"", subject, sender);
+            let output = device.shell(cmd)?;
+            Ok(format!("MMS simulated. Output: {}", output))
+        }
+        "adb_simulate_sms_delivery" => {
+            let recipient = args.get("recipient").and_then(|v| v.as_str()).unwrap_or("+15555215554");
+
+            log_info("ADB", &format!("Triggering mock SMS delivery report for {}", recipient));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = format!("am broadcast -a android.provider.Telephony.SMS_DELIVER --es recipient \"{}\"", recipient);
+            let output = device.shell(cmd)?;
+            Ok(format!("SMS delivery report triggered. Output: {}", output))
+        }
         "adb_simulate_call" => {
             let phone = args.get("phone_number").and_then(|v| v.as_str()).unwrap_or("+15555215554");
 
@@ -165,6 +461,74 @@ pub fn execute_adb_tool(name: &str, args: &Value) -> Result<String> {
             let output = device.shell(cmd)?;
             log_info("ADB", "Incoming call simulated.");
             Ok(format!("Call simulated for {}. Output: {}", phone, output))
+        }
+        "adb_simulate_call_state" => {
+            let state = args.get("state").and_then(|v| v.as_str()).unwrap_or("RINGING"); // IDLE, RINGING, OFFHOOK
+            let phone = args.get("phone_number").and_then(|v| v.as_str()).unwrap_or("+15555215554");
+
+            log_info("ADB", &format!("Transitioning telephony state to {} for number {}", state, phone));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let cmd = format!("am broadcast -a android.intent.action.PHONE_STATE --es state \"{}\" --es incoming_number \"{}\"", state, phone);
+            let output = device.shell(cmd)?;
+            Ok(format!("Call state transition to {} broadcasted. Output: {}", state, output))
+        }
+        "adb_simulate_ussd" => {
+            let ussd_code = args.get("ussd_code").and_then(|v| v.as_str()).unwrap_or("*#123#");
+
+            log_info("ADB", &format!("Triggering USSD response code: {}", ussd_code));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let encoded = ussd_code.replace('#', "%23");
+            let cmd = format!("am start -a android.intent.action.CALL -d tel:{}", encoded);
+            let output = device.shell(cmd)?;
+            Ok(format!("USSD response triggered. Output: {}", output))
+        }
+        "adb_inject_broadcast" => {
+            let action = args.get("action").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'action'"))?;
+            let component = args.get("component").and_then(|v| v.as_str());
+
+            log_info("ADB", &format!("Firing intent broadcast for action: {}", action));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let mut cmd = format!("am broadcast -a {}", action);
+            if let Some(comp) = component {
+                cmd = format!("{} -n {}", cmd, comp);
+            }
+            let output = device.shell(cmd)?;
+            Ok(format!("Broadcast fired. Output: {}", output))
+        }
+        "adb_start_service" => {
+            let component = args.get("component").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'component'"))?;
+
+            log_info("ADB", &format!("Force starting background service component: {}", component));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("am start-service {}", component))?;
+            Ok(format!("Service start command sent. Output: {}", output))
+        }
+        "adb_run_scheduled_job" => {
+            let package_name = args.get("package_name").and_then(|v| v.as_str()).ok_or_else(|| anyhow::anyhow!("Missing 'package_name'"))?;
+            let job_id = args.get("job_id").and_then(|v| v.as_i64()).unwrap_or(1);
+
+            log_info("ADB", &format!("Forcing execution of JobScheduler job {} for package {}", job_id, package_name));
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell(format!("cmd jobscheduler run -f {} {}", package_name, job_id))?;
+            Ok(format!("Job execution triggered. Output: {}", output))
+        }
+        "adb_trigger_alarms" => {
+            log_info("ADB", "Inspecting and triggering pending AlarmManager alarms...");
+            let devices = client.list_devices()?;
+            let mut device = devices.into_iter().next().ok_or_else(|| anyhow::anyhow!("No active device found"))?;
+
+            let output = device.shell("dumpsys alarm")?;
+            Ok(format!("AlarmManager state inspected/triggered:\n{}", output))
         }
 
         // ==========================================

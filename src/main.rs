@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 mod adb_service;
 mod logger;
 mod mcp;
