@@ -30,16 +30,16 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 *Focus: Installation, removal, state monitoring, permission auditing, and package extraction for static and dynamic analysis.*
 
 ### Installation & Updates
-- [ ] **Install standard APKs:** Support single APK installation (`adb install`).
+- [x] **Install standard APKs:** Support single APK installation (`adb install`).
 - [ ] **Install split APKs:** Support multi-APK/bundle installation (`adb install-multiple`).
-- [ ] **Grant runtime permissions automatically:** Auto-grant permissions during installation (`-g` flag).
-- [ ] **Allow version downgrade:** Force install over newer version (`-d` flag).
+- [x] **Grant runtime permissions automatically:** Auto-grant permissions during installation (`-g` flag).
+- [x] **Allow version downgrade:** Force install over newer version (`-d` flag).
 - [ ] **Install test-only packages:** Support packages signed with test keys (`-t` flag).
 
 ### Removal & Cleanup
 - [ ] **Uninstall packages:** Remove target application (`adb uninstall`).
 - [ ] **Keep data on uninstall:** Remove APK while preserving data (`-k` flag).
-- [ ] **Clear application data:** Reset app storage and cache without full uninstall (`adb shell pm clear <pkg>`).
+- [x] **Clear application data:** Reset app storage and cache without full uninstall (`adb shell pm clear <pkg>`).
 
 ### Package Inspection & Enumeration
 - [ ] **List installed packages:** Filter by system, 3rd-party, enabled, or disabled (`adb shell pm list packages [-3|-s|-e|-d]`).
@@ -48,7 +48,7 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 - [ ] **Query default handlers:** List default applications handling specific intents or MIME types.
 
 ### Process & Component Control
-- [ ] **Force-stop application:** Terminate app processes cleanly (`adb shell am force-stop <pkg>`).
+- [x] **Force-stop application:** Terminate app processes cleanly (`adb shell am force-stop <pkg>`).
 - [ ] **Enable/Disable components:** Selectively disable/enable specific activities, receivers, services, or providers (`adb shell pm disable/enable <component>`).
 - [ ] **Set app standby bucket:** Force application into specific power usage buckets (`active`, `working_set`, `frequent`, `rare`).
 - [ ] **Set background restrictions:** Enable/disable background execution limits for the target package.
@@ -59,12 +59,12 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 *Focus: Altering system states, hardware sensors, and environmental variables to trigger time-bombs, anti-analysis checks, or specific code paths.*
 
 ### Locale, Time & Localization
-- [ ] **Set system locale:** Change language and region to test geo-targeted malware triggers (`adb shell settings put global system_locales <locale>`).
+- [x] **Set system locale:** Change language and region to test geo-targeted malware triggers (`adb shell settings put global system_locales <locale>`).
 - [ ] **Manipulate system clock/timezone:** Change system date/time to bypass time-bomb delays or expiration checks (`adb shell date ...`).
 - [ ] **Toggle auto-time sync:** Disable network time synchronization to hold static system timestamps.
 
 ### Location & Sensor Spoofing
-- [ ] **Inject GPS coordinates:** Mock current latitude, longitude, and altitude values via location service or intents.
+- [x] **Inject GPS coordinates:** Mock current latitude, longitude, and altitude values via location service or intents.
 - [ ] **Simulate accelerometer/gyroscope:** Inject motion sensor events (rotation, tilt, shaking).
 - [ ] **Mock light & proximity sensors:** Inject ambient light levels and proximity trigger states.
 - [ ] **Mock biometric authentication:** Inject success/failure callbacks for fingerprint/face identification triggers.
@@ -76,7 +76,7 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 - [ ] **Toggle layout bounds:** Enable visual layout bounds to assist vision-based AI agents (`adb shell setprop debug.layout true`).
 
 ### Hardware & Peripheral States
-- [ ] **Simulate battery level & status:** Spoof percentage, plugged status (AC, USB, Wireless), and temperature (`adb shell dumpsys battery set level/status/unplug`).
+- [x] **Simulate battery level & status:** Spoof percentage, plugged status (AC, USB, Wireless), and temperature (`adb shell dumpsys battery set level/status/unplug`).
 - [ ] **Toggle network connectivity states:** Toggle Wi-Fi, Mobile Data, and Airplane Mode status on demand.
 - [ ] **Simulate physical button input:** Trigger keycodes for Power, Volume UP/DOWN, Home, Back, and Recent Apps (`adb shell input keyevent <code >`).
 
@@ -86,12 +86,12 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 *Focus: Injecting external communication triggers to awaken dormant malware triggers or analyze message/call-handling logic.*
 
 ### SMS & Messaging Simulation
-- [ ] **Inject incoming SMS:** Simulate received SMS with custom sender numbers, body text, and timestamps (`adb shell am broadcast -a android.provider.Telephony.SMS_RECEIVED`).
+- [x] **Inject incoming SMS:** Simulate received SMS with custom sender numbers, body text, and timestamps (`adb shell am broadcast -a android.provider.Telephony.SMS_RECEIVED`).
 - [ ] **Simulate MMS receipt:** Inject mock multimedia messages.
 - [ ] **Simulate SMS delivery reports:** Trigger mock delivery confirmation events.
 
 ### Telephony & Call Simulation
-- [ ] **Simulate incoming call:** Trigger incoming call state with arbitrary caller IDs.
+- [x] **Simulate incoming call:** Trigger incoming call state with arbitrary caller IDs.
 - [ ] **Simulate call state transitions:** Transition telephony state across `IDLE`, `RINGING`, and `OFFHOOK`.
 - [ ] **Simulate USSD responses:** Trigger mock carrier messages and USSD alert popups.
 
@@ -107,10 +107,10 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 *Focus: Extracting artifacts, monitoring persistent storage, and investigating file system alterations.*
 
 ### Artifact Extraction & Pulling
-- [ ] **Pull application private data:** Extract app files from `/data/data/<pkg>/` (requires root or debuggable build).
-- [ ] **Extract databases & SharedPreferences:** Pull SQLite databases and XML preference files for offline forensic inspection.
-- [ ] **Pull system logs & crash dumps:** Retrieve device tombstone crash files and comprehensive bugreports (`adb bugreport`).
-- [ ] **Pull external storage data:** Extract files from public `/sdcard/` locations.
+- [x] **Pull application private data:** Extract app files from `/data/data/<pkg>/` (requires root or debuggable build).
+- [x] **Extract databases & SharedPreferences:** Pull SQLite databases and XML preference files for offline forensic inspection.
+- [x] **Pull system logs & crash dumps:** Retrieve device tombstone crash files and comprehensive bugreports (`adb bugreport`).
+- [x] **Pull external storage data:** Extract files from public `/sdcard/` locations.
 
 ### File Injection & Modification
 - [ ] **Push files/payloads:** Upload scripts, tools, dynamic libraries, or sample media (`adb push <local> <remote>`).
@@ -129,7 +129,7 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 ### Process Enumeration & Inspection
 - [ ] **List running processes:** Fetch PID, UID, and process names (`adb shell ps -ef` or `adb shell top`).
 - [ ] **Inspect process memory maps:** Retrieve runtime memory region layouts (`adb shell cat /proc/<pid>/maps`).
-- [ ] **Dump process heap:** Generate and pull Java/Dalvik HPROF heap dumps (`adb shell am dumpheap <pid> <path>`).
+- [x] **Dump process heap:** Generate and pull Java/Dalvik HPROF heap dumps (`adb shell am dumpheap <pid> <path>`).
 
 ### Debugging & Profiling Controls
 - [ ] **Launch app in wait-for-debugger mode:** Start target activity suspended until debugger attaches (`adb shell am start -D -n <activity>`).
@@ -143,11 +143,11 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ### Network State & Connection Auditing
 - [ ] **List open network sockets:** View active TCP/UDP connections and associated process PIDs (`adb shell netstat -tulnp` or `ss`).
-- [ ] **Capture raw packet traffic:** Stream or record PCAP files on device interfaces using `tcpdump`.
+- [x] **Capture raw packet traffic:** Stream or record PCAP files on device interfaces using `tcpdump`.
 
 ### Proxy & Certificate Management
-- [ ] **Set system-wide HTTP proxy:** Direct HTTP traffic to intercepting proxies like Burp/ZAP (`adb shell settings put global http_proxy <ip>:<port>`).
-- [ ] **Clear system HTTP proxy:** Unset global proxy settings.
+- [x] **Set system-wide HTTP proxy:** Direct HTTP traffic to intercepting proxies like Burp/ZAP (`adb shell settings put global http_proxy <ip>:<port>`).
+- [x] **Clear system HTTP proxy:** Unset global proxy settings.
 - [ ] **Install custom CA certificate:** Push user or root CA certificates to system/user trust stores.
 - [ ] **Audit network policy controls:** Inspect background network usage restrictions and VPN configurations.
 
@@ -157,7 +157,7 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 *Focus: Capturing system-wide telemetry, debugging logs, and performance metrics.*
 
 ### Logcat Management
-- [ ] **Stream system logs:** Capture real-time log output (`adb logcat`).
+- [x] **Stream system logs:** Capture real-time log output (`adb logcat`).
 - [ ] **Filter logcat output:** Filter logs by PID, tag, severity priority (`V, D, I, W, E, F`), or regex.
 - [ ] **Clear logcat buffer:** Flush log buffers prior to executing test steps (`adb logcat -c`).
 - [ ] **Dump crash/event buffers:** Separately read `events`, `radio`, `system`, or `crash` log buffers.
@@ -169,7 +169,7 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ### Performance & Tracing
 - [ ] **Capture Perfetto/Systrace logs:** Record system-wide performance and kernel trace files.
-- [ ] **Monitor CPU/RAM metrics:** Track per-process memory (`adb shell dumpsys meminfo <pkg>`) and CPU consumption.
+- [x] **Monitor CPU/RAM metrics:** Track per-process memory (`adb shell dumpsys meminfo <pkg>`) and CPU consumption.
 
 ---
 
@@ -177,13 +177,13 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 *Focus: Driving UI workflows automatically for fuzzing or dynamic analysis navigation.*
 
 ### Input & Gesture Injection
-- [ ] **Inject tap/click:** Perform screen coordinate taps (`adb shell input tap x y`).
-- [ ] **Inject swipe/drag:** Perform swipe gestures with configurable duration (`adb shell input swipe x1 y1 x2 y2 [duration]`).
-- [ ] **Inject text input:** Type text strings into active input fields (`adb shell input text <string>`).
+- [x] **Inject tap/click:** Perform screen coordinate taps (`adb shell input tap x y`).
+- [x] **Inject swipe/drag:** Perform swipe gestures with configurable duration (`adb shell input swipe x1 y1 x2 y2 [duration]`).
+- [x] **Inject text input:** Type text strings into active input fields (`adb shell input text <string>`).
 - [ ] **Inject key events:** Send navigation hardware key events (Home, Back, Enter, Tab, Del).
 
 ### Visual & Screen Capture
-- [ ] **Take screen capture:** Capture PNG screenshot of current screen state (`adb shell screencap -p`).
+- [x] **Take screen capture:** Capture PNG screenshot of current screen state (`adb shell screencap -p`).
 - [ ] **Record screen video:** Record raw MP4 screen video for session auditing (`adb shell screenrecord`).
 
 ### UI Structure Inspection
@@ -211,3 +211,6 @@ MCP4ADB exposes **powerful ADB tools** over standard I/O JSON-RPC:
 
 ---
 
+## 10. Core ADB Connection & Control
+- [x] **List devices and adb shell
+---
