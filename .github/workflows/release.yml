@@ -1,0 +1,71 @@
+name: Build and Release MCP4ADB
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers automatically whenever you push a version tag like v0.1.0
+  workflow_dispatch: # Allows you to manually trigger it from the GitHub website
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target_name: mcp4adb-linux-amd64
+            file_path: target/release/mcp4adb
+          - os: macos-latest
+            target_name: mcp4adb-macos-amd64
+            file_path: target/release/mcp4adb
+          - os: windows-latest
+            target_name: mcp4adb-windows-amd64.exe
+            file_path: target/release/mcp4adb.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Prepare binary name
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp ${{ matrix.file_path }} dist/${{ matrix.target_name }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.os }}
+          path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create a GitHub release and upload assets
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded-artifacts
+
+      - name: Organize binaries
+        run: |
+          mkdir -p final-release
+          # Flatten structure from multi-artifact download
+          mv downloaded-artifacts/artifact-*/* final-release/
+          ls -la final-release/
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: final-release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
